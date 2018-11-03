@@ -1,0 +1,26 @@
+<div class="pageDiv" th:fragment="html">
+    <nav>
+        <ul class="pagination">
+            <li :class="{ disabled: pagination.first }">
+                <!-- 首页 -->
+                <a href="#nowhere" @click="jump('first')">«</a>
+            </li>
+            <li :class="{ disabled: !pagination.hasPrevious }">
+                <!-- 上一页 -->
+                <a href="#nowhere" @click="jump('pre')">‹</a>
+            </li>
+            <!-- 遍历的 Page4Navigator 中新增加的 navigatepageNums 数组 -->
+            <li v-for="i in pagination.navigatepageNums">
+                <a href="#nowhere" @click="jumpByNumber(i-1)">{{i}}</a>
+            </li>
+            <li :class="{ disabled: !pagination.hasNext }">
+                <!-- 下一页 -->
+                <a href="#nowhere" @click="jump('next')">›</a>
+            </li>
+            <li :class="{ disabled: pagination.last }">
+                <!-- 最后一页 -->
+                <a href="#nowhere" @click="jump('last')">»</a>
+            </li>
+        </ul>
+    </nav>
+</div>
