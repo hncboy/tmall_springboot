@@ -26,8 +26,9 @@ public class CategoryService {
 
     /**
      * 分页查询分裂
-     * @param start 起始页
-     * @param size 每页的条数
+     *
+     * @param start         起始页
+     * @param size          每页的条数
      * @param navigatePages 总的显示页数的长度
      * @return
      */
@@ -40,6 +41,7 @@ public class CategoryService {
 
     /**
      * 查询所有分类
+     *
      * @return
      */
     public List<Category> list() {
@@ -49,9 +51,39 @@ public class CategoryService {
 
     /**
      * 添加分类
+     *
      * @param category
      */
     public void add(Category category) {
+        categoryDAO.save(category);
+    }
+
+    /**
+     * 删除分类
+     *
+     * @param id
+     */
+    public void delete(int id) {
+        categoryDAO.delete(id);
+    }
+
+    /**
+     * 根据id获取分类
+     *
+     * @param id
+     * @return
+     */
+    public Category get(int id) {
+        Category c = categoryDAO.findOne(id);
+        return c;
+    }
+
+    /**
+     * 修改分类
+     *
+     * @param category
+     */
+    public void update(Category category) {
         categoryDAO.save(category);
     }
 }

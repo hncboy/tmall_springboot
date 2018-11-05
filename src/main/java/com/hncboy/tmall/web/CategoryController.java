@@ -5,10 +5,7 @@ import com.hncboy.tmall.service.CategoryService;
 import com.hncboy.tmall.util.ImageUtil;
 import com.hncboy.tmall.util.Page4Navigator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -40,13 +37,12 @@ public class CategoryController {
 
     @PostMapping("/categories")
     public Object add(Category category, MultipartFile image, HttpServletRequest request) throws Exception {
-        System.out.println("---------");
         categoryService.add(category);
         saveOrUpdateImageFile(category, image, request);
         return category;
     }
 
-    public void saveOrUpdateImageFile(Category category, MultipartFile image, HttpServletRequest request) throws Exception {
+    private void saveOrUpdateImageFile(Category category, MultipartFile image, HttpServletRequest request) throws Exception {
         File imageFolder = new File(request.getServletContext().getRealPath("img/category"));
         File file = new File(imageFolder, category.getId() + ".jpg");
         if (!file.getParentFile().exists()) {
@@ -55,5 +51,33 @@ public class CategoryController {
         image.transferTo(file);
         BufferedImage img = ImageUtil.change2jpg(file);
         ImageIO.write(img, "jpg", file);
+    }
+
+    @DeleteMapping("/categories/{id}")
+    public String delete(@PathVariable("id") int id, HttpServletRequest request) {
+        categoryService.delete(id);
+        File imageFolder = new File(request.getServletContext().getRealPath("img/category"));
+        File file = new File(imageFolder, id + ".jpg");
+        file.delete();
+        return null;
+    }
+
+    @GetMapping("/categories/{id}")
+    public Category get(@PathVariable("id") int id) {
+        Category category = categoryService.get(id);
+        return category;
+    }
+
+    @PutMapping("/categories/{id}")
+    public Object update(Category category, MultipartFile image, HttpServletRequest request) throws Exception {
+        String name = request.getParameter("name"); //PUT方式注入不了对象
+        category.setName(name);
+        categoryService.update(category);
+
+        if (image != null) {
+            //更新图片
+            saveOrUpdateImageFile(category, image, request);
+        }
+        return category;
     }
 }
