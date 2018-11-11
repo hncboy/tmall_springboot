@@ -2,6 +2,7 @@ package com.hncboy.tmall.web;
 
 import com.hncboy.tmall.pojo.Product;
 import com.hncboy.tmall.service.CategoryService;
+import com.hncboy.tmall.service.ProductImageService;
 import com.hncboy.tmall.service.ProductService;
 import com.hncboy.tmall.util.Page4Navigator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +23,16 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private ProductImageService productImageService;
+
     @GetMapping("/categories/{cid}/products")
     public Page4Navigator<Product> list(@PathVariable("cid") int cid,
                                         @RequestParam(value = "start", defaultValue = "0") int start,
                                         @RequestParam(value = "size", defaultValue = "5") int size) {
         start = start < 0 ? 0 : start;
         Page4Navigator<Product> page = productService.list(cid, start, size, 5);
+        productImageService.setFirstProductImages(page.getContent());
         return page;
     }
 
