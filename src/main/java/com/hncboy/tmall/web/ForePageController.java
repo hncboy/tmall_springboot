@@ -3,6 +3,8 @@ package com.hncboy.tmall.web;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import javax.servlet.http.HttpSession;
+
 /**
  * Created by IntelliJ IDEA.
  * User: hncboy
@@ -95,7 +97,8 @@ public class ForePageController {
     }
 
     @GetMapping("/forelogout")
-    public String logout() {
+    public String logout(HttpSession session) {
+        session.removeAttribute("user");
         return "redirect:home";
     }
 }
