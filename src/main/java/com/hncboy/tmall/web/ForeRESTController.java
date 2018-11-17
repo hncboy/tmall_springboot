@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.HtmlUtils;
 
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
 /**
@@ -52,6 +53,7 @@ public class ForeRESTController {
     public Object register(@RequestBody User user) {
         String name = user.getName();
         String password = user.getPassword();
+
         name = HtmlUtils.htmlEscape(name);
         user.setName(name);
         boolean exist = userService.isExist(name);
@@ -65,5 +67,22 @@ public class ForeRESTController {
         userService.add(user);
 
         return Result.success();
+    }
+
+    @PostMapping("/forelogin")
+    public Object login(@RequestBody User userParam, HttpSession session) {
+        //账号密码注入到 userParam 对象上，获取账号
+        String name = userParam.getName();
+        //把账号通过HtmlUtils.htmlEscape进行转义
+        name = HtmlUtils.htmlEscape(name);
+
+        User user = userService.get(name, userParam.getPassword());
+        if (null == user) {
+            String message = "账号密码错误";
+            return Result.fail(message);
+        } else {
+            session.setAttribute("user", user);
+            return Result.success();
+        }
     }
 }

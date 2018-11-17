@@ -22,15 +22,33 @@ public class UserService {
     @Autowired
     private UserDAO userDAO;
 
+    /**
+     * 用户名是否重复
+     *
+     * @param name
+     * @return
+     */
     public boolean isExist(String name) {
         User user = getByName(name);
         return null != user;
     }
 
-    public User getByName(String name) {
-        return userDAO.findByName(name);
+    /**
+     * 登录
+     *
+     * @param name
+     * @param password
+     * @return
+     */
+    public User get(String name, String password) {
+        return userDAO.getByNameAndPassword(name, password);
     }
 
+    /**
+     * 注册
+     *
+     * @param user
+     */
     public void add(User user) {
         userDAO.save(user);
     }
@@ -40,5 +58,9 @@ public class UserService {
         Pageable pageable = new PageRequest(start, size, sort);
         Page pageFromJPA = userDAO.findAll(pageable);
         return new Page4Navigator<>(pageFromJPA, navigatePages);
+    }
+
+    private User getByName(String name) {
+        return userDAO.findByName(name);
     }
 }
