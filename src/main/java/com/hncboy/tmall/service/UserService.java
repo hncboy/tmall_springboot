@@ -22,6 +22,19 @@ public class UserService {
     @Autowired
     private UserDAO userDAO;
 
+    public boolean isExist(String name) {
+        User user = getByName(name);
+        return null != user;
+    }
+
+    public User getByName(String name) {
+        return userDAO.findByName(name);
+    }
+
+    public void add(User user) {
+        userDAO.save(user);
+    }
+
     public Page4Navigator<User> list(int start, int size, int navigatePages) {
         Sort sort = new Sort(Sort.Direction.DESC, "id");
         Pageable pageable = new PageRequest(start, size, sort);

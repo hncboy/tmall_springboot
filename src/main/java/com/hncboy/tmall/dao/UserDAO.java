@@ -10,4 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * Time: 12:26
  */
 public interface UserDAO extends JpaRepository<User, Integer> {
+
+    User findByName(String name);
 }
