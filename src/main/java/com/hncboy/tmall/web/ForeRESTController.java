@@ -1,20 +1,16 @@
 package com.hncboy.tmall.web;
 
-import com.hncboy.tmall.pojo.Category;
-import com.hncboy.tmall.pojo.User;
-import com.hncboy.tmall.service.CategoryService;
-import com.hncboy.tmall.service.ProductService;
-import com.hncboy.tmall.service.UserService;
+import com.hncboy.tmall.pojo.*;
+import com.hncboy.tmall.service.*;
 import com.hncboy.tmall.util.Result;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.HtmlUtils;
 
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,6 +31,18 @@ public class ForeRESTController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ProductImageService productImageService;
+
+    @Autowired
+    private PropertyValueService propertyValueService;
+
+    @Autowired
+    private OrderItemService orderItemService;
+
+    @Autowired
+    private ReviewService reviewService;
 
     @GetMapping("/forehome")
     public Object home() {
@@ -84,5 +92,34 @@ public class ForeRESTController {
             session.setAttribute("user", user);
             return Result.success();
         }
+    }
+
+    @GetMapping("/foreproduct/{pid}")
+    public Object product(@PathVariable("pid") int pid) {
+        Product product = productService.get(pid);
+
+        //根据对象product，获取这个产品对应的单个图片集
+        List<ProductImage> productSingleImages = productImageService.listSingleProductImages(product);
+        //根据对象product，获取这个产品对应的详情图片集合
+        List<ProductImage> productDetailImages = productImageService.listDetailProductImages(product);
+
+        product.setProductSingleImages(productSingleImages);
+        product.setProductDetailImages(productDetailImages);
+
+        //获取产品的所有属性值
+        List<PropertyValue> pvs = propertyValueService.list(product);
+        //获取产品对应的所有的评价
+        List<Review> reviews = reviewService.list(product);
+
+        //设置产品的销量和评价数量
+        productService.setSaleAndReviewNumber(product);
+        productImageService.setFirstProductImage(product);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("product", product);
+        map.put("pvs", pvs);
+        map.put("reviews", reviews);
+
+        return Result.success(map);
     }
 }

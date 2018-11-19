@@ -30,6 +30,12 @@ public class ProductService {
     private CategoryService categoryService;
 
     @Autowired
+    private ReviewService reviewService;
+
+    @Autowired
+    private OrderItemService orderItemService;
+
+    @Autowired
     private ProductImageService productImageService;
 
     public void add(Product product) {
@@ -106,5 +112,23 @@ public class ProductService {
      */
     private List<Product> listByCategory(Category category) {
         return productDAO.findByCategoryOrderById(category);
+    }
+
+    /**
+     * 为产品设置销量和评价
+     *
+     * @param products
+     */
+    public void setSaleAndReviewNumber(List<Product> products) {
+        for (Product product : products) {
+            setSaleAndReviewNumber(product);
+        }
+    }
+
+    public void setSaleAndReviewNumber(Product product) {
+        int saleCount = orderItemService.getSaleCount(product);
+        int reviewCount = reviewService.getCount(product);
+        product.setSaleCount(saleCount);
+        product.setReviewCount(reviewCount);
     }
 }
