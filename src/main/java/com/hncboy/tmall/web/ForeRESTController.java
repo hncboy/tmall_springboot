@@ -125,6 +125,15 @@ public class ForeRESTController {
         return Result.success(map);
     }
 
+    @GetMapping("forecheckLogin")
+    public Object checkLogin(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (null != user) {
+            return Result.success();
+        }
+        return Result.fail("未登录");
+    }
+
     @GetMapping("forecategory/{cid}")
     public Object category(@PathVariable int cid, String sort) {
         Category c = categoryService.get(cid);
@@ -152,5 +161,16 @@ public class ForeRESTController {
             }
         }
         return c;
+    }
+
+    @PostMapping("foresearch")
+    public Object search(String keyword) {
+        if (null == keyword) {
+            keyword = "";
+        }
+        List<Product> ps = productService.search(keyword, 0, 20);
+        productImageService.setFirstProductImages(ps);
+        productService.setSaleAndReviewNumber(ps);
+        return ps;
     }
 }
