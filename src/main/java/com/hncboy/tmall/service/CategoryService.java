@@ -94,7 +94,7 @@ public class CategoryService {
         }
     }
 
-    private void removeCategoryFromProduct(Category category) {
+    public void removeCategoryFromProduct(Category category) {
         List<Product> products = category.getProducts();
         if (null != products) {
             for (Product product : products) {

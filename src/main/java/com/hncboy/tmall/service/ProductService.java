@@ -78,7 +78,7 @@ public class ProductService {
      *
      * @param category
      */
-    private void fill(Category category) {
+    public void fill(Category category) {
         List<Product> products = listByCategory(category);
         productImageService.setFirstProductImages(products);
         category.setProducts(products);

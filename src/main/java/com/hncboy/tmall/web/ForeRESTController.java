@@ -1,5 +1,6 @@
 package com.hncboy.tmall.web;
 
+import com.hncboy.tmall.comparator.*;
 import com.hncboy.tmall.pojo.*;
 import com.hncboy.tmall.service.*;
 import com.hncboy.tmall.util.Result;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.HtmlUtils;
 
 import javax.servlet.http.HttpSession;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,5 +123,34 @@ public class ForeRESTController {
         map.put("reviews", reviews);
 
         return Result.success(map);
+    }
+
+    @GetMapping("forecategory/{cid}")
+    public Object category(@PathVariable int cid, String sort) {
+        Category c = categoryService.get(cid);
+        productService.fill(c);
+        productService.setSaleAndReviewNumber(c.getProducts());
+        categoryService.removeCategoryFromProduct(c);
+
+        if (null != sort) {
+            switch (sort) {
+                case "review":
+                    Collections.sort(c.getProducts(), new ProductReviewComparator());
+                    break;
+                case "date":
+                    Collections.sort(c.getProducts(), new ProductDateComparator());
+                    break;
+                case "saleCount":
+                    Collections.sort(c.getProducts(), new ProductSaleCountComparator());
+                    break;
+                case "price":
+                    Collections.sort(c.getProducts(), new ProductPriceComparator());
+                    break;
+                case "all":
+                    Collections.sort(c.getProducts(), new ProductAllComparator());
+                    break;
+            }
+        }
+        return c;
     }
 }
