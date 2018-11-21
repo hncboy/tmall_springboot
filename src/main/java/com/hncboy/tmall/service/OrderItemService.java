@@ -4,6 +4,7 @@ import com.hncboy.tmall.dao.OrderItemDAO;
 import com.hncboy.tmall.pojo.Order;
 import com.hncboy.tmall.pojo.OrderItem;
 import com.hncboy.tmall.pojo.Product;
+import com.hncboy.tmall.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -79,5 +80,15 @@ public class OrderItemService {
 
     private List<OrderItem> listByOrder(Order order) {
         return orderItemDAO.findByOrderOrderByIdDesc(order);
+    }
+
+    /**
+     * 查询用户的所有订单
+     *
+     * @param user
+     * @return
+     */
+    public List<OrderItem> listByUser(User user) {
+        return orderItemDAO.findByUserAndOrderIsNull(user);
     }
 }

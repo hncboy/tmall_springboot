@@ -9,10 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.HtmlUtils;
 
 import javax.servlet.http.HttpSession;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -172,5 +169,63 @@ public class ForeRESTController {
         productImageService.setFirstProductImages(ps);
         productService.setSaleAndReviewNumber(ps);
         return ps;
+    }
+
+    @GetMapping("forebuyone")
+    public Object buyone(int pid, int num, HttpSession session) {
+        return buyoneAndAddCart(pid, num, session);
+    }
+
+    private int buyoneAndAddCart(int pid, int num, HttpSession session) {
+        Product product = productService.get(pid);
+        int oiid = 0;
+
+        User user = (User) session.getAttribute("user");
+        boolean found = false;
+        List<OrderItem> ois = orderItemService.listByUser(user);
+        for (OrderItem oi : ois) {
+            if (oi.getProduct().getId() == product.getId()) {
+                oi.setNumber(oi.getNumber() + num);
+                orderItemService.update(oi);
+                found = true;
+                oiid = oi.getId();
+                break;
+            }
+        }
+
+        //订单不存在
+        if (!found) {
+            OrderItem oi = new OrderItem();
+            oi.setUser(user);
+            oi.setProduct(product);
+            oi.setNumber(num);
+            orderItemService.add(oi);
+            oiid = oi.getId();
+        }
+        return oiid;
+    }
+
+    @GetMapping("forebuy")
+    public Object buy(String[] oiid, HttpSession session) {
+        List<OrderItem> orderItems = new ArrayList<>();
+        float total = 0;
+
+        //通过字符串数组获取参数oiid
+        for (String strid : oiid) {
+            int id = Integer.parseInt(strid);
+            OrderItem oi = orderItemService.get(id);
+            //累计这些ois的价格总数，赋值在total上
+            total += oi.getProduct().getPromotePrice() * oi.getNumber();
+            orderItems.add(oi);
+        }
+
+        productImageService.setFirstProdutImagesOnOrderItems(orderItems);
+        //把订单项集合放在session的属性 "ois" 上
+        session.setAttribute("ois", orderItems);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderItems", orderItems);
+        map.put("total", total); //把订单集合和total 放在map里
+        return Result.success(map);
     }
 }
