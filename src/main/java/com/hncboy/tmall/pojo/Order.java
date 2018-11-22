@@ -52,22 +52,19 @@ public class Order {
     private String statusDesc;
 
     public String getStatusDesc() {
-        if (null != statusDesc) {
-            return statusDesc;
-        }
         String desc;
         switch (status) {
             case OrderService.waitPay:
-                desc = "待付";
+                desc = "待付款";
                 break;
             case OrderService.waitDelivery:
-                desc = "待发";
+                desc = "待发货";
                 break;
             case OrderService.waitConfirm:
-                desc = "待收";
+                desc = "待收货";
                 break;
             case OrderService.waitReview:
-                desc = "等评";
+                desc = "等评价";
                 break;
             case OrderService.finish:
                 desc = "完成";
@@ -78,8 +75,7 @@ public class Order {
             default:
                 desc = "未知";
         }
-        statusDesc = desc;
-        return statusDesc;
+        return desc;
     }
 
     public void setStatusDesc(String statusDesc) {

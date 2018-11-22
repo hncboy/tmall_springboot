@@ -5,8 +5,6 @@ import com.hncboy.tmall.pojo.Order;
 import com.hncboy.tmall.pojo.OrderItem;
 import com.hncboy.tmall.pojo.User;
 import com.hncboy.tmall.util.Page4Navigator;
-import com.hncboy.tmall.util.Result;
-import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,15 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.HttpSession;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,7 +59,7 @@ public class OrderService {
      *
      * @param order
      */
-    private void removeOrderFromOrderItem(Order order) {
+    public void removeOrderFromOrderItem(Order order) {
         List<OrderItem> orderItems = order.getOrderItems();
         for (OrderItem orderItem : orderItems) {
             orderItem.setOrder(null);
@@ -98,5 +89,29 @@ public class OrderService {
 
     public void add(Order order) {
         orderDAO.save(order);
+    }
+
+    public List<Order> listByUserWithoutDelete(User user) {
+        List<Order> orders = listByUserAndNotDeleted(user);
+        orderItemService.fill(orders);
+        return orders;
+    }
+
+    public List<Order> listByUserAndNotDeleted(User user) {
+        return orderDAO.findByUserAndStatusNotOrderByIdDesc(user, OrderService.delete);
+    }
+
+    /**
+     * 计算订单价格
+     *
+     * @param o
+     */
+    public void calc(Order o) {
+        List<OrderItem> orderItems = o.getOrderItems();
+        float total = 0;
+        for (OrderItem orderItem : orderItems) {
+            total += orderItem.getProduct().getPromotePrice() * orderItem.getNumber();
+        }
+        o.setTotal(total);
     }
 }

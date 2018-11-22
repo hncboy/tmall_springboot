@@ -314,4 +314,88 @@ public class ForeRESTController {
 
         return Result.success(map);
     }
+
+    @GetMapping("forebought")
+    public Object bought(HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (null == user) {
+            return Result.fail("未登录");
+        }
+        List<Order> os = orderService.listByUserWithoutDelete(user);
+        orderService.removeOrderFromOrderItem(os);
+        return os;
+    }
+
+    @GetMapping("foreconfirmPay")
+    public Object confirmPay(int oid) {
+        Order o = orderService.get(oid);
+        orderItemService.fill(o);
+        orderService.calc(o);
+        orderService.removeOrderFromOrderItem(o);
+        return o;
+    }
+
+    @GetMapping("foreorderConfirmed")
+    public Object orderConfirmed(int oid) {
+        Order o = orderService.get(oid);
+        o.setStatus(OrderService.waitReview);
+        o.setConfirmDate(new Date());
+        orderService.update(o);
+        return Result.success();
+    }
+
+    @PutMapping("foredeleteOrder")
+    public Object deleteOrder(int oid) {
+        Order o = orderService.get(oid);
+        o.setStatus(OrderService.delete);
+        orderService.update(o);
+        return Result.success();
+    }
+
+    @GetMapping("forereview")
+    public Object review(int oid) {
+        Order o = orderService.get(oid);
+        orderItemService.fill(o);
+        orderService.removeOrderFromOrderItem(o);
+
+        // 获取第一个订单项对应的产品
+        Product p = o.getOrderItems().get(0).getProduct();
+        // 获取这个产品的评价集合
+        List<Review> reviews = reviewService.list(p);
+        //为产品设置评价数量和销量
+        productService.setSaleAndReviewNumber(p);
+
+        Map<String, Object> map = new HashMap<>();
+        //把产品，订单和评价集合放在map上
+        map.put("p", p);
+        map.put("o", o);
+        map.put("reviews", reviews);
+
+        return Result.success(map);
+    }
+
+    @PostMapping("foredoreview")
+    public Object doreview(HttpSession session, int oid, int pid, String content) {
+        //根据oid获取订单对象o
+        Order o = orderService.get(oid);
+        //修改订单对象状态
+        o.setStatus(OrderService.finish);
+        //更新订单对象到数据库
+        orderService.update(o);
+
+        Product p = productService.get(pid);
+        //获取参数content (评价信息)进行转义
+        content = HtmlUtils.htmlEscape(content);
+
+        User user = (User) session.getAttribute("user");
+        Review review = new Review();
+        //为评价对象review设置 评价信息，产品，时间，用户
+        review.setContent(content);
+        review.setProduct(p);
+        review.setCreateDate(new Date());
+        review.setUser(user);
+        reviewService.add(review);
+
+        return Result.success();
+    }
 }

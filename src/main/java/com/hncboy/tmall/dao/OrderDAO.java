@@ -1,8 +1,10 @@
 package com.hncboy.tmall.dao;
 
+import com.hncboy.tmall.pojo.Order;
+import com.hncboy.tmall.pojo.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.hncboy.tmall.pojo.Order;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,4 +13,6 @@ import com.hncboy.tmall.pojo.Order;
  * Time: 16:59
  */
 public interface OrderDAO extends JpaRepository<Order, Integer> {
+
+    List<Order> findByUserAndStatusNotOrderByIdDesc(User user, String status);
 }
