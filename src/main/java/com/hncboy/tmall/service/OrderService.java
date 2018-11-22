@@ -3,15 +3,27 @@ package com.hncboy.tmall.service;
 import com.hncboy.tmall.dao.OrderDAO;
 import com.hncboy.tmall.pojo.Order;
 import com.hncboy.tmall.pojo.OrderItem;
+import com.hncboy.tmall.pojo.User;
 import com.hncboy.tmall.util.Page4Navigator;
+import com.hncboy.tmall.util.Result;
+import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.servlet.http.HttpSession;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,6 +44,12 @@ public class OrderService {
     @Autowired
     private OrderDAO orderDAO;
 
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private OrderItemService orderItemService;
+
     public Page4Navigator<Order> list(int start, int size, int navigatePages) {
         Sort sort = new Sort(Sort.Direction.DESC, "id");
         Pageable pageable = new PageRequest(start, size, sort);
@@ -40,13 +58,14 @@ public class OrderService {
     }
 
     public void removeOrderFromOrderItem(List<Order> orders) {
-        for (Order order: orders) {
+        for (Order order : orders) {
             removeOrderFromOrderItem(order);
         }
     }
 
     /**
      * 将订单里的订单项的订单属性设置为空
+     *
      * @param order
      */
     private void removeOrderFromOrderItem(Order order) {
@@ -62,5 +81,22 @@ public class OrderService {
 
     public void update(Order bean) {
         orderDAO.save(bean);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, rollbackForClassName = "Exception")
+    public float add(Order order, List<OrderItem> ois) {
+        float total = 0;
+        add(order);
+
+        for (OrderItem oi : ois) {
+            oi.setOrder(order);
+            orderItemService.update(oi);
+            total += oi.getProduct().getPromotePrice() * oi.getNumber();
+        }
+        return total;
+    }
+
+    public void add(Order order) {
+        orderDAO.save(order);
     }
 }
