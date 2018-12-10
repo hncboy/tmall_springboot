@@ -1,7 +1,8 @@
 package com.hncboy.tmall.interceptor;
 
-import com.hncboy.tmall.pojo.User;
 import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -56,8 +57,8 @@ public class LoginInterceptor implements HandlerInterceptor {
         //判断是否是以 requireAuthPages 里的开头的
         if (beginWith(page, requireAuthPages)) {
             //如果是就判断是否登陆，未登陆就跳转到 login 页面
-            User user = (User) session.getAttribute("user");
-            if (user == null) {
+            Subject subject = SecurityUtils.getSubject();
+            if (!subject.isAuthenticated()) {
                 httpServletResponse.sendRedirect("login");
                 return false;
             }

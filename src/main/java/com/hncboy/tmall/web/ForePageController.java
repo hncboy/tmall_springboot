@@ -1,5 +1,7 @@
 package com.hncboy.tmall.web;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -97,8 +99,12 @@ public class ForePageController {
     }
 
     @GetMapping("/forelogout")
-    public String logout(HttpSession session) {
-        session.removeAttribute("user");
+    public String logout() {
+        Subject subject = SecurityUtils.getSubject();
+        //如果登录，则退出
+        if (subject.isAuthenticated()) {
+            subject.logout();
+        }
         return "redirect:home";
     }
 }

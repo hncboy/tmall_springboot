@@ -60,7 +60,7 @@ public class UserService {
         return new Page4Navigator<>(pageFromJPA, navigatePages);
     }
 
-    private User getByName(String name) {
+    public User getByName(String name) {
         return userDAO.findByName(name);
     }
 }
