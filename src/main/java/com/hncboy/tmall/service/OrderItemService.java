@@ -5,7 +5,11 @@ import com.hncboy.tmall.pojo.Order;
 import com.hncboy.tmall.pojo.OrderItem;
 import com.hncboy.tmall.pojo.Product;
 import com.hncboy.tmall.pojo.User;
+import com.hncboy.tmall.util.SpringContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +21,7 @@ import java.util.List;
  * Time: 17:00
  */
 @Service
+@CacheConfig(cacheNames = "orderItems")
 public class OrderItemService {
 
     @Autowired
@@ -30,12 +35,14 @@ public class OrderItemService {
             fill(order);
     }
 
+    @CacheEvict(allEntries = true)
     public void update(OrderItem orderItem) {
         orderItemDAO.save(orderItem);
     }
 
     public void fill(Order order) {
-        List<OrderItem> orderItems = listByOrder(order);
+        OrderItemService orderItemService = SpringContextUtil.getBean(OrderItemService.class);
+        List<OrderItem> orderItems = orderItemService.listByOrder(order);
         float total = 0;
         int totalNumber = 0;
         for (OrderItem oi : orderItems) {
@@ -49,20 +56,24 @@ public class OrderItemService {
         order.setOrderItems(orderItems);
     }
 
+    @CacheEvict(allEntries = true)
     public void add(OrderItem orderItem) {
         orderItemDAO.save(orderItem);
     }
 
+    @Cacheable(key = "'orderItems-one-'+#p0")
     public OrderItem get(int id) {
         return orderItemDAO.findOne(id);
     }
 
+    @CacheEvict(allEntries = true)
     public void delete(int id) {
         orderItemDAO.delete(id);
     }
 
     public int getSaleCount(Product product) {
-        List<OrderItem> ois = listByProduct(product);
+        OrderItemService orderItemService = SpringContextUtil.getBean(OrderItemService.class);
+        List<OrderItem> ois = orderItemService.listByProduct(product);
         int result = 0;
         for (OrderItem oi : ois) {
             if (null != oi.getOrder()) {
@@ -74,11 +85,13 @@ public class OrderItemService {
         return result;
     }
 
-    private List<OrderItem> listByProduct(Product product) {
+    @Cacheable(key = "'orderItems-pid-'+#p0.id")
+    public List<OrderItem> listByProduct(Product product) {
         return orderItemDAO.findByProduct(product);
     }
 
-    private List<OrderItem> listByOrder(Order order) {
+    @Cacheable(key = "'orderItems-oid'+#p0.id")
+    public List<OrderItem> listByOrder(Order order) {
         return orderItemDAO.findByOrderOrderByIdDesc(order);
     }
 
@@ -88,6 +101,7 @@ public class OrderItemService {
      * @param user
      * @return
      */
+    @Cacheable(key = "'orderItems-uid'+#p0.id")
     public List<OrderItem> listByUser(User user) {
         return orderItemDAO.findByUserAndOrderIsNull(user);
     }

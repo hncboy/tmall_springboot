@@ -5,6 +5,9 @@ import com.hncboy.tmall.pojo.Category;
 import com.hncboy.tmall.pojo.Product;
 import com.hncboy.tmall.util.Page4Navigator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,7 @@ import java.util.List;
  * Time: 19:21
  */
 @Service
+@CacheConfig(cacheNames = "categories") //用于维护分类信息在 redis里都有哪些 key
 public class CategoryService {
 
     @Autowired
@@ -33,6 +37,7 @@ public class CategoryService {
      * @param navigatePages 总的显示页数的长度
      * @return
      */
+    @Cacheable(key = "'categories-page-'+#p0+ '-' + #p1")
     public Page4Navigator<Category> list(int start, int size, int navigatePages) {
         Sort sort = new Sort(Sort.Direction.DESC, "id");
         Pageable pageable = new PageRequest(start, size, sort);
@@ -45,6 +50,7 @@ public class CategoryService {
      *
      * @return
      */
+    @Cacheable(key = "'categories-all'")
     public List<Category> list() {
         Sort sort = new Sort(Sort.Direction.DESC, "id");
         return categoryDAO.findAll(sort);
@@ -55,6 +61,7 @@ public class CategoryService {
      *
      * @param category
      */
+    @CacheEvict(allEntries = true) //删除 categories~keys 里的所有的keys
     public void add(Category category) {
         categoryDAO.save(category);
     }
@@ -64,6 +71,7 @@ public class CategoryService {
      *
      * @param id
      */
+    @CacheEvict(allEntries = true)
     public void delete(int id) {
         categoryDAO.delete(id);
     }
@@ -74,6 +82,7 @@ public class CategoryService {
      * @param id
      * @return
      */
+    @Cacheable(key = "'categories-one-'+ #p0")
     public Category get(int id) {
         Category c = categoryDAO.findOne(id);
         return c;
@@ -84,6 +93,7 @@ public class CategoryService {
      *
      * @param category
      */
+    @CacheEvict(allEntries = true)
     public void update(Category category) {
         categoryDAO.save(category);
     }

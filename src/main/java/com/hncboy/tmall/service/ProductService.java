@@ -4,7 +4,11 @@ import com.hncboy.tmall.dao.ProductDAO;
 import com.hncboy.tmall.pojo.Category;
 import com.hncboy.tmall.pojo.Product;
 import com.hncboy.tmall.util.Page4Navigator;
+import com.hncboy.tmall.util.SpringContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +25,7 @@ import java.util.List;
  * Time: 12:28
  */
 @Service
+@CacheConfig(cacheNames = "products")
 public class ProductService {
 
     @Autowired
@@ -38,22 +43,27 @@ public class ProductService {
     @Autowired
     private ProductImageService productImageService;
 
+    @CacheEvict(allEntries = true)
     public void add(Product product) {
         productDAO.save(product);
     }
 
+    @CacheEvict(allEntries = true)
     public void delete(int id) {
         productDAO.delete(id);
     }
 
+    @Cacheable(key = "'products-one-'+ #p0")
     public Product get(int id) {
         return productDAO.findOne(id);
     }
 
+    @CacheEvict(allEntries = true)
     public void update(Product product) {
         productDAO.save(product);
     }
 
+    @Cacheable(key = "'products-cid-'+#p0+'-page-'+#p1 + '-' + #p2 ")
     public Page4Navigator<Product> list(int cid, int start, int size, int navigatePages) {
         Category category = categoryService.get(cid);
         Sort sort = new Sort(Sort.Direction.DESC, "id");
@@ -79,7 +89,9 @@ public class ProductService {
      * @param category
      */
     public void fill(Category category) {
-        List<Product> products = listByCategory(category);
+        //间接获取productService，诱发AOP，实现listByCategory获取缓存
+        ProductService productService = SpringContextUtil.getBean(ProductService.class);
+        List<Product> products = productService.listByCategory(category);
         productImageService.setFirstProductImages(products);
         category.setProducts(products);
     }
@@ -110,7 +122,8 @@ public class ProductService {
      * @param category
      * @return
      */
-    private List<Product> listByCategory(Category category) {
+    @Cacheable(key = "'products-cid-'+ #p0.id")
+    public List<Product> listByCategory(Category category) {
         return productDAO.findByCategoryOrderById(category);
     }
 

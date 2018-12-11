@@ -5,7 +5,11 @@ import com.hncboy.tmall.pojo.Order;
 import com.hncboy.tmall.pojo.OrderItem;
 import com.hncboy.tmall.pojo.User;
 import com.hncboy.tmall.util.Page4Navigator;
+import com.hncboy.tmall.util.SpringContextUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +27,7 @@ import java.util.List;
  * Time: 17:02
  */
 @Service
+@CacheConfig(cacheNames = "orders")
 public class OrderService {
 
     public static final String waitPay = "waitPay";
@@ -34,9 +39,6 @@ public class OrderService {
 
     @Autowired
     private OrderDAO orderDAO;
-
-    @Autowired
-    private OrderService orderService;
 
     @Autowired
     private OrderItemService orderItemService;
@@ -66,14 +68,17 @@ public class OrderService {
         }
     }
 
+    @Cacheable(key = "'orders-one-'+ #p0")
     public Order get(int oid) {
         return orderDAO.findOne(oid);
     }
 
+    @CacheEvict(allEntries = true)
     public void update(Order bean) {
         orderDAO.save(bean);
     }
 
+    @CacheEvict(allEntries = true)
     @Transactional(propagation = Propagation.REQUIRED, rollbackForClassName = "Exception")
     public float add(Order order, List<OrderItem> ois) {
         float total = 0;
@@ -87,12 +92,14 @@ public class OrderService {
         return total;
     }
 
+    @CacheEvict(allEntries = true)
     public void add(Order order) {
         orderDAO.save(order);
     }
 
     public List<Order> listByUserWithoutDelete(User user) {
-        List<Order> orders = listByUserAndNotDeleted(user);
+        OrderService orderService = SpringContextUtil.getBean(OrderService.class);
+        List<Order> orders = orderService.listByUserAndNotDeleted(user);
         orderItemService.fill(orders);
         return orders;
     }

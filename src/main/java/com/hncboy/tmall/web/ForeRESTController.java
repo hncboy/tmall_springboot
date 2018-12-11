@@ -243,7 +243,7 @@ public class ForeRESTController {
             orderItems.add(oi);
         }
 
-        productImageService.setFirstProdutImagesOnOrderItems(orderItems);
+        productImageService.setFirstProductImagesOnOrderItems(orderItems);
         //把订单项集合放在session的属性 "ois" 上
         session.setAttribute("ois", orderItems);
 
@@ -266,7 +266,7 @@ public class ForeRESTController {
         //获取为这个用户关联的订单项集合 ois
         List<OrderItem> ois = orderItemService.listByUser(user);
         //设置图片
-        productImageService.setFirstProdutImagesOnOrderItems(ois);
+        productImageService.setFirstProductImagesOnOrderItems(ois);
         return ois;
     }
 
