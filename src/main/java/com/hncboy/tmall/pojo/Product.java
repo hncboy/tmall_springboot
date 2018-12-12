@@ -2,6 +2,7 @@ package com.hncboy.tmall.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -28,6 +29,7 @@ public class Product {
     @JoinColumn(name = "cid")
     private Category category;
 
+    @Field
     private String name;
     private String subTitle;
     private float originalPrice;

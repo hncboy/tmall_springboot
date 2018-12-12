@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-
 <head th:include="include/admin/adminHeader::html('属性管理')"></head>
 
 <body>
-
 <div th:replace="include/admin/adminNavigator::html"></div>
-
 <script>
     $(function () {
         var cid = getUrlParms("cid");
@@ -66,10 +63,10 @@
                         }
                     });
                 },
-                jump:function (page) {
+                jump: function (page) {
                     jump(page, vue);
                 },
-                jumpByNumber:function (start) {
+                jumpByNumber: function (start) {
                     jumpByNumber(start, vue);
                 }
             }
@@ -135,7 +132,5 @@
 
 <div th:replace="include/admin/adminFooter::html"></div>
 
-</body>
-</html>
 </body>
 </html>

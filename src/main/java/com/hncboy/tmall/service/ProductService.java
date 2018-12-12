@@ -1,10 +1,14 @@
 package com.hncboy.tmall.service;
 
 import com.hncboy.tmall.dao.ProductDAO;
+import com.hncboy.tmall.es.ProductESDAO;
 import com.hncboy.tmall.pojo.Category;
 import com.hncboy.tmall.pojo.Product;
 import com.hncboy.tmall.util.Page4Navigator;
 import com.hncboy.tmall.util.SpringContextUtil;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -13,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,6 +38,9 @@ public class ProductService {
     private ProductDAO productDAO;
 
     @Autowired
+    private ProductESDAO productESDAO;
+
+    @Autowired
     private CategoryService categoryService;
 
     @Autowired
@@ -46,11 +55,13 @@ public class ProductService {
     @CacheEvict(allEntries = true)
     public void add(Product product) {
         productDAO.save(product);
+        productESDAO.save(product);
     }
 
     @CacheEvict(allEntries = true)
     public void delete(int id) {
         productDAO.delete(id);
+        productESDAO.delete(id);
     }
 
     @Cacheable(key = "'products-one-'+ #p0")
@@ -61,6 +72,7 @@ public class ProductService {
     @CacheEvict(allEntries = true)
     public void update(Product product) {
         productDAO.save(product);
+        productESDAO.save(product);
     }
 
     @Cacheable(key = "'products-cid-'+#p0+'-page-'+#p1 + '-' + #p2 ")
@@ -145,10 +157,63 @@ public class ProductService {
         product.setReviewCount(reviewCount);
     }
 
-    public List<Product> search(String keyword, int start, int size) {
+    /*public List<Product> search(String keyword, int start, int size) {
         Sort sort = new Sort(Sort.Direction.DESC, "id");
         Pageable pageable = new PageRequest(start, size, sort);
         List<Product> products = productDAO.findByNameLike("%" + keyword + "%", pageable);
         return products;
+    }*/
+
+    /**
+     * 初始化es数据
+     */
+    private void initDatabase2ES() {
+        Pageable pageable = new PageRequest(0, 5);
+        Page<Product> page = productESDAO.findAll(pageable);
+        if (page.getContent().isEmpty()) {
+            List<Product> products = productDAO.findAll();
+            productESDAO.save(products);
+        }
+    }
+
+    public List<Product> search(String keyword, int start, int size) {
+        initDatabase2ES();
+
+        //模糊匹配
+        FunctionScoreQueryBuilder fuzzyMatching = QueryBuilders.functionScoreQuery()
+                .add(QueryBuilders.matchPhraseQuery("name", keyword),
+                        ScoreFunctionBuilders.weightFactorFunction(100))
+                .scoreMode("sum")
+                .setMinScore(10);
+
+        //模糊分词匹配
+        FunctionScoreQueryBuilder fuzzyWordSegmentation = QueryBuilders.functionScoreQuery()
+                .add(QueryBuilders.matchQuery("name", keyword),
+                        ScoreFunctionBuilders.weightFactorFunction(100))
+                .scoreMode("sum")
+                .setMinScore(10);
+
+        //排序分页
+        //Sort sort = new Sort(Sort.Direction.DESC, "id");
+        Pageable pageable = new PageRequest(start, size);
+
+        //构建模糊匹配查询
+        SearchQuery fuzzyMatchingQuery = new NativeSearchQueryBuilder()
+                .withPageable(pageable)
+                .withQuery(fuzzyMatching)
+                .build();
+
+        //构建模糊分词匹配查询
+        SearchQuery fuzzyWordSegmentationQuery = new NativeSearchQueryBuilder()
+                .withPageable(pageable)
+                .withQuery(fuzzyWordSegmentation)
+                .build();
+
+        Page<Product> page = productESDAO.search(fuzzyMatchingQuery);
+        if (page.getContent().size() == 0) {
+            page = productESDAO.search(fuzzyWordSegmentationQuery);
+        }
+
+        return page.getContent();
     }
 }
